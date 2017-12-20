@@ -1,129 +1,98 @@
-﻿<?php
-
+<?php
 header('Access-Control-Allow-Origin: *');
 
-//////////////////////////////////////////////////////////
-// Basic Auth
-$AUTH_USER = 'digibot';
-$AUTH_PASS = 'akl23kl!1l2kj9od13lkjsd';
-header('Cache-Control: no-cache, must-revalidate, max-age=0');
-$has_supplied_credentials = !(empty($_SERVER['PHP_AUTH_USER']) && empty($_SERVER['PHP_AUTH_PW']));
-$is_not_authenticated = (
-	!$has_supplied_credentials ||
-	$_SERVER['PHP_AUTH_USER'] != $AUTH_USER ||
-	$_SERVER['PHP_AUTH_PW']   != $AUTH_PASS
-);
-if ($is_not_authenticated) {
-	header('HTTP/1.1 401 Authorization Required');
-	header('WWW-Authenticate: Basic realm="Access denied"');
-	exit;
-}
-//////////////////////////////////////////////////////////
 
+//2907;"What ";"Prepaid";"Reload";"charges"
 
+//access post data
 $json = json_decode(file_get_contents("php://input"));
-//file_put_contents('./log.txt', $json->id . "\n", FILE_APPEND);
+
 
 $id = $json->id;
 $sessionId = $json->sessionId;
 $intent = $json->result->metadata->intentName;
-$entity = $json->result->parameters->topic;
-$entity1 = $json->result->parameters->subtopic;
-$entity2 = $json->result->parameters->details;
-$query = str_replace("'", "''",$json->result->resolvedQuery);
-$orderUrl = 'https://digiretail.azurewebsites.net/action.ashx?action=json';
-$jsonData = array(
-    'command' => 'webhook_get_answer',
-    'hook_id' => "$id"
-);
+$entity = $json->result->parameters->testparam;
+$entity1 = $json->result->parameters->testparam1;
+$entity2 = $json->result->parameters->testparam2;
+//$query = str_replace("'", "''",$json->result->resolvedQuery);
+
+
+$orderUrl = 'https://bot.dialogflow.com/digiprodtest';
+//$jsonData = array(
+   
+  //  'command' =>"'get_test_webhook_answer'",
+    //'hook_id' => "'$id'"
+//);
 
 //Encode the array into JSON.
-$postData = json_encode($jsonData);
-//echo $postData;
+//$postData = json_encode($jsonData, true);
 
 
-////////////////////////////////////////////////////////////
-// send User Input to chatbase
-$ch = curl_init();
+$conn_string = "'hostaddr=35.200.224.70 host=digiprod-bff61:asia-south1:pginstance port=5432  dbname=postgres user=postgres password=postgres123'";
 
-curl_setopt($ch, CURLOPT_URL, "https://chatbase-area120.appspot.com/api/message");
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"api_key\": \"5ea1b233-3492-4c05-9514-39ec506e1286\",\"type\": \"user\",\"platform\": \"our-curl-test-platform\",\"message\": \"$query\",\"intent\": \"$intent\",\"version\": \"1.0\",\"user_id\": \"user$sessionId\"}");
-curl_setopt($ch, CURLOPT_POST, 1);
 
-$headers = array();
-$headers[] = "Cache-Control: no-cache";
-$headers[] = "Content-Type: application/x-www-form-urlencoded";
-curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+$conn = pg_connect($conn_string);  
 
-$result = curl_exec($ch);
-if (curl_errno($ch)) {
-//    echo 'Error:';
-} else {
-//	echo $result;
+if ($conn === false)
+{
+	echo "Error in db conn";
+	
 }
-curl_close ($ch);
-////////////////////////////////////////////////////////////
 
-
-//////////////////////////////////////////////////////////
-// send our statement directly to database
-$serverName = "digicentral.database.windows.net";   
-$uid = "digicentral";
-$pwd = "mupay1828!";    
-$databaseName = "digicentral";   
-$connectionInfo = array( "UID"=>$uid,                              
-                         "PWD"=>$pwd,                              
-                         "Database"=>$databaseName,
-					     "CharacterSet" => "UTF-8");
-/* Connect using SQL Server Authentication. */    
-
-$conn = sqlsrv_connect( $serverName, $connectionInfo);        
-
-if ($conn){
+//if ($conn){
+	else{
 	/* Execute the query. */    
-	$tsql = "webhook_get_answer '$sessionId','$query','$id','$intent','$entity','$entity1','$entity2'";
-
-	$stmt = sqlsrv_query( $conn, $tsql);
-
+	
+	$vintent = "test";
+	$ventity = "testparam";
+	$ventity1 = "testparam1";
+	$ventity2 = "testparam2";
+	//$tsql = "'select get_test_webhook_answer ('" . $vintent ."','". $ventity."','". $ventity1."','".  $ventity2."')";
+	//$tsql = "SELECT * FROM test_webhook_answer_";	
+	//$stmt = pg_query( $conn, $tsql);
+	$stmt = pg_query( $conn, "SELECT * FROM test_webhook_answer_";);
+	
+	
+	
 	if( $stmt === false )  
 	{  
-		 echo "Error in statement preparation/execution.\n";  
-		 die( print_r( sqlsrv_errors(), true));  
+		 echo "Error in statement preparation/execution.";  
+		 die( print_r(pg_result_errors(), true));  
 	}  
 
-	while ($response = sqlsrv_fetch_array($stmt)) {
-		echo $response[0];
+	while ($response = pg_fetch_array($stmt))
+	{
+		//$data = array(
+            //'channel'     => $channel,
+            //'username'    => $bot_name,
+            //'text'        => $message,
+            //'icon_emoji'  => $icon,
+          //  'attachments' => $attachments
+        //);
+        //$data_string = json_encode($data);
+		//echo $response;
+		//$result = json_decode($response);
 		
-		//////////////////////////////////////////////////////////
-		// send RESPONSE to Chatbase
-		// Generated by curl-to-PHP: http://incarnate.github.io/curl-to-php/
-		//	$ch = curl_init();
-		//
-		//	curl_setopt($ch, CURLOPT_URL, "https://chatbase-area120.appspot.com/api/message");
-		//	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		//	curl_setopt($ch, CURLOPT_POSTFIELDS, "{\"api_key\": \"1dd09daf-03dd-4138-9a9f-6e353d240b6e\",\"type\": \"agent\",\"platform\": \"our-curl-test-platform\",\"message\": \"response\",\"version\": \"1.0\",\"user_id\": \"user$sessionId\"}");
-		//	curl_setopt($ch, CURLOPT_POST, 1);
-		//
-		//	$headers = array();
-		//	$headers[] = "Cache-Control: no-cache";
-		//	$headers[] = "Content-Type: application/x-www-form-urlencoded";
-		//	curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-		//
-		//	$result = curl_exec($ch);
-		//	if (curl_errno($ch)) {
-		////		echo 'Error:' . curl_error($ch);
-		//	}
-		//	curl_close ($ch);	
-		//////////////////////////////////////////////////////////
+			//$ch = curl_init('https://'.$domain.'.slack.com/services/hooks/incoming-webhook?token='.$token);
+			$ch = curl_init('https://bot.dialogflow.com/digiprodtest');
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $response);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+                'Content-Type: application/json',
+                'Content-Length: ' . strlen($response))
+            );
+        //Execute CURL
+        $result = curl_exec($ch);
+        return $result;        
+		
+						
 	}
-
-	sqlsrv_free_stmt( $stmt);    
-}else{
-//	exit;
-}
-sqlsrv_close($conn);
-//////////////////////////////////////////////////////////
-
 	
-	
+	//free result memory
+	pg_free_result($stmt);    
+	}
+	pg_close($conn);
+
+
+?>
